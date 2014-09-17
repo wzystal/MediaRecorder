@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <RelativeLayout
+        android:id="@+id/title_bar_recorder"
+        android:layout_width="match_parent"
+        android:layout_height="50dp" >
+
+        <Button
+            android:id="@+id/btn_recorder_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/btn_recorder_back" />
+
+        <Button
+            android:id="@+id/btn_recorder_flash"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/btn_recorder_flash" />
+
+        <Button
+            android:id="@+id/btn_recorder_switch_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginTop="12dp"
+            android:layout_toRightOf="@id/btn_recorder_flash"
+            android:background="@drawable/btn_recorder_overturn" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/layout_recorder_surface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/title_bar_recorder" >
+
+        <SurfaceView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/bottom_recorder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/black" >
+
+        <com.baidu.mediarecorder.ProgressView
+            android:id="@+id/progress_recorder"
+            android:layout_width="match_parent"
+            android:layout_height="20dp" />
+
+        <TextView
+            android:id="@+id/tv_total_time"
+            android:layout_width="wrap_content"
+            android:layout_height="23dp"
+            android:layout_below="@id/progress_recorder"
+            android:gravity="center"
+            android:padding="5dp"
+            android:textSize="14sp" />
+
+        <RelativeLayout
+            android:id="@+id/bottom_recorder_buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_total_time"
+            android:layout_marginTop="20dp"
+            android:padding="10dp" >
+
+            <Button
+                android:id="@+id/btn_recorder_rollback"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/btn_recorder_rollback"
+                android:enabled="false" />
+
+            <Button
+                android:id="@+id/btn_recorder_record"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:background="@drawable/btn_recorder_video" />
+
+            <Button
+                android:id="@+id/btn_recorder_finish"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/btn_recorder_finish"
+                android:enabled="false" />
+        </RelativeLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/bottom_recorder_buttons"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="10dp"
+            android:text="@string/tips_recorder"
+            android:textColor="#6b6e79"
+            android:textSize="20sp" />
+    </RelativeLayout>
+
+</RelativeLayout>
