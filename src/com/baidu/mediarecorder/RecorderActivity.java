@@ -13,6 +13,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
@@ -46,6 +47,7 @@ import com.baidu.mediarecorder.util.VideoFrame;
 public class RecorderActivity extends Activity implements OnClickListener,
 		OnTouchListener {
 
+		//测试
 	private final String TAG = getClass().getSimpleName();
 
 	private DisplayMetrics displayMetrics;
@@ -96,9 +98,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	private boolean isFlashOn = false;// 是否开启闪光灯
 	private boolean isPreviewOn = false;// 是否为前置摄像头
 	private boolean isFirstFrame = true;// 是否为第一帧
-	private boolean rollbackEnabled = false;
-	// 判断是否在回滚阶段，点击"回删"进入回滚阶段，再次点击"回删"会删除最近的视频片段
-	private boolean isRollbackSate = false;
+	private boolean isRollbackSate = false;// 回删状态标识，点击"回删"标记为true，再次点击"回删"会删除最近的视频片段
 	private boolean isRecordingSaved = false;// 是否保存过视频文件
 
 	private Camera camera;
@@ -268,13 +268,18 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 		@Override
 		public void onPreviewFrame(byte[] data, Camera camera) {
-			videoTimeStamp = audioTimeStamp;
 			totalTime = System.currentTimeMillis() - firstTime - totalPauseTime
 					- rollbackTime - ((long) (1.0 / (double) frameRate) * 1000);
+			if (totalTime > maxTime)
+				return;
+			if (!recording && totalTime > 0)
+				btnRollback.setEnabled(true);
+			if (!recording && totalTime > minTime)
+				btnFinish.setEnabled(true);
+			videoTimeStamp = audioTimeStamp;
 			if (null != data && !isRecordFinish && recording) {
-
+				
 			}
-
 		}
 	}
 
@@ -315,7 +320,6 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		camera.setParameters(cameraParams);
 	}
 
-	// 录制音频的线程
 	class AudioRecordRunnable implements Runnable {
 		int bufferSize;
 		short[] buffer;
@@ -337,7 +341,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 					.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 			if (audioRecord != null) {
 				// 判断音频录制是否被初始化
-				while (this.audioRecord.getState() == 0) {
+				while (audioRecord.getState() == 0) {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
@@ -360,6 +364,41 @@ public class RecorderActivity extends Activity implements OnClickListener,
 				audioRecord.release();
 			}
 		}
+	}
+
+	private void deleteLastVideo() {
+		ArrayList<VideoFrame> lastVideoList = null;
+		long timeStamp1 = 0L, timeStamp2 = 0L;
+		if (allVideoList != null && allVideoList.size() > 0) {
+			lastVideoList = allVideoList.getLast();
+			if (lastVideoList.size() > 0) {
+				timeStamp1 = lastVideoList.get(lastVideoList.size() - 1)
+						.getTimeStamp();
+			}
+			allVideoList.removeLast();
+		}
+		if (allAudioList != null && allAudioList.size() > 0) {
+			allAudioList.removeLast();
+		}
+		if (allVideoList != null && allVideoList.size() > 0) {
+			lastVideoList = allVideoList.getLast();
+			if (lastVideoList.size() > 0) {
+				timeStamp2 = lastVideoList.get(lastVideoList.size() - 1)
+						.getTimeStamp();
+			}
+		}
+		rollbackTimeStamp += (timeStamp1 - timeStamp2);// 计算回删视频片段的时间戳
+		int frontTime = progressView.getLastTime();
+		progressView.setCurrentState(State.DELETE);
+		isRollbackSate = false;
+		// 若进度条队列为空，设置回删按钮不可点击
+		if (progressView.isTimeListEmpty()) {
+			btnRollback.setEnabled(false);
+			totalTime = 0;
+		}
+		int lastTime = progressView.getLastTime();
+		rollbackTime += (frontTime - lastTime);
+		btnFinish.setEnabled(lastTime >= minTime ? true : false);
 	}
 
 	private void saveRecorder() {
@@ -440,6 +479,14 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	@Override
 	public void onClick(View view) {
 		switch (view.getId()) {
+		case R.id.btn_recorder_rollback:
+			if (!isRollbackSate) {
+				progressView.setCurrentState(State.ROLLBACK);
+				isRollbackSate = true;
+			} else {
+				deleteLastVideo();
+			}
+			break;
 		case R.id.btn_recorder_finish:
 			isRecordFinish = true;
 			saveRecorder();
