@@ -13,14 +13,12 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.media.MediaRecorder.AudioSource;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -42,12 +40,14 @@ import com.baidu.mediarecorder.ProgressView.State;
 import com.baidu.mediarecorder.contant.RecorderEnv;
 import com.baidu.mediarecorder.util.CameraHelper;
 import com.baidu.mediarecorder.util.FFmpegFrameRecorder;
+import com.baidu.mediarecorder.util.ImageHelper;
 import com.baidu.mediarecorder.util.VideoFrame;
+import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 public class RecorderActivity extends Activity implements OnClickListener,
 		OnTouchListener {
 
-		//测试
+	// 测试
 	private final String TAG = getClass().getSimpleName();
 
 	private DisplayMetrics displayMetrics;
@@ -268,20 +268,28 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 		@Override
 		public void onPreviewFrame(byte[] data, Camera camera) {
-			totalTime = System.currentTimeMillis() - firstTime - totalPauseTime
-					- rollbackTime - ((long) (1.0 / (double) frameRate) * 1000);
-			if (totalTime > maxTime)
-				return;
-			if (!recording && totalTime > 0)
-				btnRollback.setEnabled(true);
-			if (!recording && totalTime > minTime)
-				btnFinish.setEnabled(true);
-			videoTimeStamp = audioTimeStamp;
 			if (null != data && !isRecordFinish && recording) {
-				
+				totalTime = System.currentTimeMillis() - firstTime
+						- totalPauseTime - rollbackTime
+						- ((long) (1.0 / (double) frameRate) * 1000);
+				if (totalTime > maxTime)
+					return;
+				if (!recording && totalTime > 0)
+					btnRollback.setEnabled(true);
+				if (!recording && totalTime > minTime)
+					btnFinish.setEnabled(true);
+				videoTimeStamp = audioTimeStamp;
+				IplImage iplImage = IplImage.create(previewHeight,
+						previewWidth, 8, 2);//IPL_DEPTH_8U=8
+				byte[] tempData = ImageHelper.rotateYUV420Degree90(data, previewWidth,
+						previewHeight);//竖屏相机拍摄的图像，会逆时针翻转90度
+				iplImage.getByteBuffer().put(tempData);
+				VideoFrame videoFrame = new VideoFrame(videoTimeStamp, iplImage, data);
+				tempVideoList.add(videoFrame);
 			}
 		}
 	}
+	
 
 	private void handleSurfaceChanged() {
 		if (null == camera) {

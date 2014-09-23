@@ -6,6 +6,7 @@ import java.util.List;
 
 import android.hardware.Camera;
 import android.hardware.Camera.Size;
+import android.util.Log;
 
 public class CameraHelper {
 
@@ -19,6 +20,7 @@ public class CameraHelper {
 		if (null != supportedSizes && supportedSizes.size() > 0) {
 			boolean hasSize = false;
 			for (Size size : supportedSizes) {
+				Log.d("wzy.size", "当前手机支持的分辨率：" + size.width + "*" + size.height);
 				if (null != size && size.width == width
 						&& size.height == height) {
 					previewSize = size;

@@ -8,6 +8,16 @@ public class VideoFrame {
 	private IplImage image;
 	private byte[] data;
 
+	public VideoFrame(){
+		
+	}
+	
+	public VideoFrame(long timeStamp, IplImage image, byte[] data) {
+		this.timeStamp = timeStamp;
+		this.image = image;
+		this.data = data;
+	}
+
 	public long getTimeStamp() {
 		return timeStamp;
 	}
