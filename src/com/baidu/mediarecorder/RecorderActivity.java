@@ -43,6 +43,7 @@ import com.baidu.mediarecorder.util.FFmpegFrameRecorder;
 import com.baidu.mediarecorder.util.ImageHelper;
 import com.baidu.mediarecorder.util.VideoFrame;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
+import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
 
 public class RecorderActivity extends Activity implements OnClickListener,
 		OnTouchListener {
@@ -73,6 +74,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 	private float minTime = RecorderEnv.MIN_RECORD_TIME;
 	private float maxTime = RecorderEnv.MAX_RECORD_TIME;
+	private String videoPath;
+	private File videoFile;
 
 	private long frameTime = 0;
 
@@ -205,7 +208,10 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 	private void initRecorder() {
 		frameTime = (1000000L / RecorderEnv.VIDEO_FRAME_RATE);
+
 		// fileVideoPath = new File(strVideoPath);
+		videoPath = RecorderEnv.SAVE_DIR_VIDEO + System.currentTimeMillis()
+				+ ".mp4";
 		mediaRecorder = new FFmpegFrameRecorder(new File(""), 480, 480, 1);
 		mediaRecorder.setFormat(RecorderEnv.OUTPUT_FORMAT);
 		mediaRecorder.setSampleRate(RecorderEnv.AUDIO_SAMPLE_RATE);
@@ -280,16 +286,16 @@ public class RecorderActivity extends Activity implements OnClickListener,
 					btnFinish.setEnabled(true);
 				videoTimeStamp = audioTimeStamp;
 				IplImage iplImage = IplImage.create(previewHeight,
-						previewWidth, 8, 2);//IPL_DEPTH_8U=8
-				byte[] tempData = ImageHelper.rotateYUV420Degree90(data, previewWidth,
-						previewHeight);//竖屏相机拍摄的图像，会逆时针翻转90度
+						previewWidth, IPL_DEPTH_8U, 2);
+				byte[] tempData = ImageHelper.rotateYUV420Degree90(data,
+						previewWidth, previewHeight);// 竖屏相机拍摄的图像，会逆时针翻转90度
 				iplImage.getByteBuffer().put(tempData);
-				VideoFrame videoFrame = new VideoFrame(videoTimeStamp, iplImage, data);
+				VideoFrame videoFrame = new VideoFrame(videoTimeStamp,
+						iplImage, data);
 				tempVideoList.add(videoFrame);
 			}
 		}
 	}
-	
 
 	private void handleSurfaceChanged() {
 		if (null == camera) {
@@ -480,6 +486,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 			protected void onPostExecute(Void result) {
 				super.onPostExecute(result);
 				savingDialog.dismiss();
+
 			}
 		}.execute();
 	}
