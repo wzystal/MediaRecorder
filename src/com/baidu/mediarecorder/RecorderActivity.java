@@ -1,6 +1,5 @@
 package com.baidu.mediarecorder;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
@@ -40,10 +39,10 @@ import com.baidu.mediarecorder.ProgressView.State;
 import com.baidu.mediarecorder.contant.RecorderEnv;
 import com.baidu.mediarecorder.util.CameraHelper;
 import com.baidu.mediarecorder.util.FFmpegFrameRecorder;
-import com.baidu.mediarecorder.util.ImageHelper;
+import com.baidu.mediarecorder.util.YuvHelper;
 import com.baidu.mediarecorder.util.VideoFrame;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
-import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
+import static com.googlecode.javacv.cpp.opencv_core.*;
 
 public class RecorderActivity extends Activity implements OnClickListener,
 		OnTouchListener {
@@ -75,11 +74,10 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	private float minTime = RecorderEnv.MIN_RECORD_TIME;
 	private float maxTime = RecorderEnv.MAX_RECORD_TIME;
 	private String videoPath;
-	private File videoFile;
 
 	private long frameTime = 0;
 
-	private long firstTime = 0;// 第一次按下屏幕的时间
+	private long startTime = 0;// 第一次按下屏幕的时间
 	private long startPauseTime = 0;// 暂停录制的开始时间(手指抬起)
 	private long stopPauseTime = 0;// 暂停录制的结束时间(手指重新按下)
 	private long curPausedTime = 0;// 本次暂停的时长
@@ -88,6 +86,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	private long totalTime = 0; // = 当前时间 - firstTime - totalPauseTime -
 								// rollbackTime - frameTime
 
+	private int frameNum = 0;
 	private long audioTimeStamp = 0;
 	private long videoTimeStamp = 0;
 	private long rollbackTimeStamp = 0;// 回删的视频戳时长
@@ -108,7 +107,6 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	private Parameters cameraParams;
 	private int cameraId = -1, cameraFacing = CameraInfo.CAMERA_FACING_BACK;// 默认为后置摄像头
 	private CameraView cameraView;
-	private int frameRate = 30;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -207,12 +205,12 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	}
 
 	private void initRecorder() {
-		frameTime = (1000000L / RecorderEnv.VIDEO_FRAME_RATE);
+		frameTime = (RecorderEnv.VIDEO_BIT_RATE / RecorderEnv.VIDEO_FRAME_RATE);
 
 		// fileVideoPath = new File(strVideoPath);
 		videoPath = RecorderEnv.SAVE_DIR_VIDEO + System.currentTimeMillis()
 				+ ".mp4";
-		mediaRecorder = new FFmpegFrameRecorder(new File(""), 480, 480, 1);
+		mediaRecorder = new FFmpegFrameRecorder(videoPath, 480, 480, 1);
 		mediaRecorder.setFormat(RecorderEnv.OUTPUT_FORMAT);
 		mediaRecorder.setSampleRate(RecorderEnv.AUDIO_SAMPLE_RATE);
 		mediaRecorder.setFrameRate(RecorderEnv.VIDEO_FRAME_RATE);
@@ -275,23 +273,26 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		@Override
 		public void onPreviewFrame(byte[] data, Camera camera) {
 			if (null != data && !isRecordFinish && recording) {
-				totalTime = System.currentTimeMillis() - firstTime
+				totalTime = System.currentTimeMillis() - startTime
 						- totalPauseTime - rollbackTime
-						- ((long) (1.0 / (double) frameRate) * 1000);
+						- ((long) (1.0 / (double) RecorderEnv.VIDEO_FRAME_RATE) * 1000);
+				Log.d("wzy.logic", "开始录制视频...totalTime=" + totalTime);
 				if (totalTime > maxTime)
 					return;
 				if (!recording && totalTime > 0)
 					btnRollback.setEnabled(true);
 				if (!recording && totalTime > minTime)
 					btnFinish.setEnabled(true);
-				videoTimeStamp = audioTimeStamp;
+				// videoTimeStamp = audioTimeStamp;
 				IplImage iplImage = IplImage.create(previewHeight,
 						previewWidth, IPL_DEPTH_8U, 2);
-				byte[] tempData = ImageHelper.rotateYUV420Degree90(data,
+				byte[] tempData = YuvHelper.rotateYUV420Degree90(data,
 						previewWidth, previewHeight);// 竖屏相机拍摄的图像，会逆时针翻转90度
 				iplImage.getByteBuffer().put(tempData);
-				VideoFrame videoFrame = new VideoFrame(videoTimeStamp,
-						iplImage, data);
+				long timestamp = frameTime * frameNum;
+				frameNum++;
+				VideoFrame videoFrame = new VideoFrame(timestamp, iplImage,
+						data);
 				tempVideoList.add(videoFrame);
 			}
 		}
@@ -301,7 +302,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		if (null == camera) {
 			return;
 		}
-		cameraParams.setPreviewFrameRate(frameRate);
+		cameraParams.setPreviewFrameRate(RecorderEnv.VIDEO_FRAME_RATE);
 		// 根据预设宽高获取相机支持的预览尺寸
 		Size previewSize = CameraHelper.getOptimalPreviewSize(camera,
 				previewWidth, previewHeight);
@@ -514,20 +515,22 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			Log.d("wzy.lifecycle", TAG + ".onTouch() called ! ACTION_DOWN");
+			recording = true;
 			btnRecord.setSelected(true);
 			if (!isRecordStart) {
 				isRecordStart = true;
-				firstTime = System.currentTimeMillis();
+				startTime = System.currentTimeMillis();
 			} else {
 				stopPauseTime = System.currentTimeMillis();
 				curPausedTime = stopPauseTime - startPauseTime
-						- ((long) (1 / (double) frameRate) * 1000);
+						- ((long) (1 / (double) RecorderEnv.VIDEO_FRAME_RATE) * 1000);
 				totalPauseTime += curPausedTime;
 			}
 			progressView.setCurrentState(State.START);
 			break;
 		case MotionEvent.ACTION_UP:
 			Log.d("wzy.lifecycle", TAG + ".onTouch() called ! ACTION_UP");
+			recording = false;
 			btnRecord.setSelected(false);
 			progressView.setCurrentState(State.PAUSE);
 			progressView.putTimeList((int) totalTime);
