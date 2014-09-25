@@ -1,5 +1,6 @@
 package com.baidu.mediarecorder;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
@@ -10,6 +11,7 @@ import java.util.List;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
@@ -19,9 +21,11 @@ import android.hardware.Camera.Size;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder.AudioSource;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore.Video;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -34,7 +38,6 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.baidu.mediarecorder.ProgressView.State;
 import static com.baidu.mediarecorder.contant.RecorderEnv.*;
 import com.baidu.mediarecorder.util.CameraHelper;
@@ -42,11 +45,14 @@ import com.baidu.mediarecorder.util.FFmpegFrameRecorder;
 import com.baidu.mediarecorder.util.YuvHelper;
 import com.baidu.mediarecorder.util.VideoFrame;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
-import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;;
+
+import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
+
+;
 
 public class RecorderActivity extends Activity implements OnClickListener,
 		OnTouchListener {
-	
+
 	private final String TAG = getClass().getSimpleName();
 
 	private DisplayMetrics displayMetrics;
@@ -71,6 +77,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	private LinkedList<ArrayList<ShortBuffer>> allAudioList = new LinkedList<ArrayList<ShortBuffer>>();
 
 	private String videoPath;
+	private Uri uriVideoPath;// 视频文件在系统中存放的url
 
 	private long frameTime = 0;
 
@@ -216,6 +223,10 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		mediaRecorder.setAudioCodec(AUDIO_CODEC);
 		mediaRecorder.setVideoBitrate(VIDEO_BIT_RATE);
 		mediaRecorder.setAudioBitrate(AUDIO_BIT_RATE);
+		// 新增语句，设置为编码延迟
+		mediaRecorder.setVideoOption("preset", "superfast");
+		// 实时编码，
+		mediaRecorder.setVideoOption("tune", "zerolatency");
 
 		new Thread(new AudioRecordRunnable()).start();
 		try {
@@ -277,8 +288,6 @@ public class RecorderActivity extends Activity implements OnClickListener,
 					return;
 				if (!recording && totalTime > 0)
 					btnRollback.setEnabled(true);
-				if (!recording && totalTime > MIN_RECORD_TIME)
-					btnFinish.setEnabled(true);
 				// videoTimeStamp = audioTimeStamp;
 				IplImage iplImage = IplImage.create(previewHeight,
 						previewWidth, IPL_DEPTH_8U, 2);
@@ -427,8 +436,10 @@ public class RecorderActivity extends Activity implements OnClickListener,
 				savingDialog.setCanceledOnTouchOutside(false);
 				savingDialog
 						.setContentView(R.layout.activity_recorder_progress);
-				progressBar = (ProgressBar) findViewById(R.id.recorder_progress_bar);
-				percent = (TextView) findViewById(R.id.recorder_progress_percent);
+				progressBar = (ProgressBar) savingDialog
+						.findViewById(R.id.recorder_progress_bar);
+				percent = (TextView) savingDialog
+						.findViewById(R.id.recorder_progress_percent);
 				savingDialog.show();
 			}
 
@@ -439,10 +450,16 @@ public class RecorderActivity extends Activity implements OnClickListener,
 						.iterator();
 				ArrayList<VideoFrame> videoList = null;
 				VideoFrame videoFrame = null;
-				int count1 = 0;
+				int allSize1 = allVideoList.size(), perProgress1 = 0, count1 = 0;
+				// if (allSize1 == 0) {
+				// publishProgress(40);
+				// } else {
+				// perProgress1 = (int) 40 / allSize1;
+				// }
 				while (videoIterator.hasNext()) {
 					videoList = videoIterator.next();
 					count1++;
+					// publishProgress(20 + perProgress1 * count1);
 					for (int i = 0; i < videoList.size(); i++) {
 						videoFrame = videoList.get(i);
 						mediaRecorder.setTimestamp(videoFrame.getTimeStamp());
@@ -453,13 +470,20 @@ public class RecorderActivity extends Activity implements OnClickListener,
 						}
 					}
 				}
+				publishProgress(60);
 				Iterator<ArrayList<ShortBuffer>> audioIterator = allAudioList
 						.iterator();
 				ArrayList<ShortBuffer> audioList = null;
-				int count2 = 0;
+				int allSize2 = allVideoList.size(), perProgress2 = 0, count2 = 0;
+				// if (allSize2 == 0) {
+				// publishProgress(90);
+				// } else {
+				// perProgress2 = (int) 40 / allSize2;
+				// }
 				while (audioIterator.hasNext()) {
 					audioList = audioIterator.next();
 					count2++;
+					// publishProgress(60 + perProgress2 * count2);
 					for (ShortBuffer shortBuffer : audioList) {
 						try {
 							Buffer[] samples = new Buffer[] { shortBuffer };
@@ -468,6 +492,21 @@ public class RecorderActivity extends Activity implements OnClickListener,
 							e.printStackTrace();
 						}
 					}
+				}
+				publishProgress(90);
+				Uri videoTable = Uri.parse(VIDEO_CONTENT_URI);
+				ContentValues values = new ContentValues(7);
+				values.put(Video.Media.TITLE, "video");
+				values.put(Video.Media.DISPLAY_NAME, "video.mp4");
+				values.put(Video.Media.DATE_TAKEN, System.currentTimeMillis());
+				values.put(Video.Media.MIME_TYPE, "video/3gpp");
+				values.put(Video.Media.DATA, videoPath);
+				try {
+					uriVideoPath = getContentResolver().insert(videoTable,
+							values);
+				} catch (Throwable e) {
+					uriVideoPath = null;
+					e.printStackTrace();
 				}
 				publishProgress(100);
 				return null;
@@ -483,7 +522,6 @@ public class RecorderActivity extends Activity implements OnClickListener,
 			protected void onPostExecute(Void result) {
 				super.onPostExecute(result);
 				savingDialog.dismiss();
-
 			}
 		}.execute();
 	}
@@ -512,6 +550,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		case MotionEvent.ACTION_DOWN:
 			Log.d("wzy.lifecycle", TAG + ".onTouch() called ! ACTION_DOWN");
 			recording = true;
+			btnFinish.setEnabled(false);
+			btnRollback.setEnabled(false);
 			btnRecord.setSelected(true);
 			if (!isRecordStart) {
 				isRecordStart = true;
@@ -527,6 +567,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		case MotionEvent.ACTION_UP:
 			Log.d("wzy.lifecycle", TAG + ".onTouch() called ! ACTION_UP");
 			recording = false;
+			if (totalTime > MIN_RECORD_TIME)
+				btnFinish.setEnabled(true);
 			btnRecord.setSelected(false);
 			progressView.setCurrentState(State.PAUSE);
 			progressView.putTimeList((int) totalTime);
