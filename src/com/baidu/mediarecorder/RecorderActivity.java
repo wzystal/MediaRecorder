@@ -36,18 +36,17 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.baidu.mediarecorder.ProgressView.State;
-import com.baidu.mediarecorder.contant.RecorderEnv;
+import static com.baidu.mediarecorder.contant.RecorderEnv.*;
 import com.baidu.mediarecorder.util.CameraHelper;
 import com.baidu.mediarecorder.util.FFmpegFrameRecorder;
 import com.baidu.mediarecorder.util.YuvHelper;
 import com.baidu.mediarecorder.util.VideoFrame;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
-import static com.googlecode.javacv.cpp.opencv_core.*;
+import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;;
 
 public class RecorderActivity extends Activity implements OnClickListener,
 		OnTouchListener {
-
-	// 测试
+	
 	private final String TAG = getClass().getSimpleName();
 
 	private DisplayMetrics displayMetrics;
@@ -71,8 +70,6 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	// 保存要录制的音频数据
 	private LinkedList<ArrayList<ShortBuffer>> allAudioList = new LinkedList<ArrayList<ShortBuffer>>();
 
-	private float minTime = RecorderEnv.MIN_RECORD_TIME;
-	private float maxTime = RecorderEnv.MAX_RECORD_TIME;
 	private String videoPath;
 
 	private long frameTime = 0;
@@ -127,7 +124,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		displayMetrics = getResources().getDisplayMetrics();
 		screenWidth = displayMetrics.widthPixels;
 		screenHeight = displayMetrics.heightPixels;
-		perWidth = screenWidth / maxTime;
+		perWidth = screenWidth / MAX_RECORD_TIME;
 
 		btnBack = (Button) findViewById(R.id.btn_recorder_back);
 		btnBack.setOnClickListener(this);
@@ -205,21 +202,20 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	}
 
 	private void initRecorder() {
-		frameTime = (RecorderEnv.VIDEO_BIT_RATE / RecorderEnv.VIDEO_FRAME_RATE);
+		frameTime = (VIDEO_BIT_RATE / VIDEO_FRAME_RATE);
 
 		// fileVideoPath = new File(strVideoPath);
-		videoPath = RecorderEnv.SAVE_DIR_VIDEO + System.currentTimeMillis()
-				+ ".mp4";
+		videoPath = SAVE_DIR_VIDEO + System.currentTimeMillis() + ".mp4";
 		mediaRecorder = new FFmpegFrameRecorder(videoPath, 480, 480, 1);
-		mediaRecorder.setFormat(RecorderEnv.OUTPUT_FORMAT);
-		mediaRecorder.setSampleRate(RecorderEnv.AUDIO_SAMPLE_RATE);
-		mediaRecorder.setFrameRate(RecorderEnv.VIDEO_FRAME_RATE);
-		mediaRecorder.setVideoCodec(RecorderEnv.VIDEO_CODEC);
-		mediaRecorder.setVideoQuality(RecorderEnv.VIDEO_QUALITY);
-		mediaRecorder.setAudioQuality(RecorderEnv.VIDEO_QUALITY);
-		mediaRecorder.setAudioCodec(RecorderEnv.AUDIO_CODEC);
-		mediaRecorder.setVideoBitrate(RecorderEnv.VIDEO_BIT_RATE);
-		mediaRecorder.setAudioBitrate(RecorderEnv.AUDIO_BIT_RATE);
+		mediaRecorder.setFormat(OUTPUT_FORMAT);
+		mediaRecorder.setSampleRate(AUDIO_SAMPLE_RATE);
+		mediaRecorder.setFrameRate(VIDEO_FRAME_RATE);
+		mediaRecorder.setVideoCodec(VIDEO_CODEC);
+		mediaRecorder.setVideoQuality(VIDEO_QUALITY);
+		mediaRecorder.setAudioQuality(VIDEO_QUALITY);
+		mediaRecorder.setAudioCodec(AUDIO_CODEC);
+		mediaRecorder.setVideoBitrate(VIDEO_BIT_RATE);
+		mediaRecorder.setAudioBitrate(AUDIO_BIT_RATE);
 
 		new Thread(new AudioRecordRunnable()).start();
 		try {
@@ -275,13 +271,13 @@ public class RecorderActivity extends Activity implements OnClickListener,
 			if (null != data && !isRecordFinish && recording) {
 				totalTime = System.currentTimeMillis() - startTime
 						- totalPauseTime - rollbackTime
-						- ((long) (1.0 / (double) RecorderEnv.VIDEO_FRAME_RATE) * 1000);
+						- ((long) (1.0 / (double) VIDEO_FRAME_RATE) * 1000);
 				Log.d("wzy.logic", "开始录制视频...totalTime=" + totalTime);
-				if (totalTime > maxTime)
+				if (totalTime > MAX_RECORD_TIME)
 					return;
 				if (!recording && totalTime > 0)
 					btnRollback.setEnabled(true);
-				if (!recording && totalTime > minTime)
+				if (!recording && totalTime > MIN_RECORD_TIME)
 					btnFinish.setEnabled(true);
 				// videoTimeStamp = audioTimeStamp;
 				IplImage iplImage = IplImage.create(previewHeight,
@@ -302,7 +298,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		if (null == camera) {
 			return;
 		}
-		cameraParams.setPreviewFrameRate(RecorderEnv.VIDEO_FRAME_RATE);
+		cameraParams.setPreviewFrameRate(VIDEO_FRAME_RATE);
 		// 根据预设宽高获取相机支持的预览尺寸
 		Size previewSize = CameraHelper.getOptimalPreviewSize(camera,
 				previewWidth, previewHeight);
@@ -342,11 +338,12 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		private int mCount = 0;
 
 		private AudioRecordRunnable() {
-			bufferSize = AudioRecord.getMinBufferSize(
-					RecorderEnv.AUDIO_SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
-					AudioFormat.ENCODING_PCM_16BIT);
-			audioRecord = new AudioRecord(AudioSource.MIC,
-					RecorderEnv.AUDIO_SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
+			bufferSize = AudioRecord
+					.getMinBufferSize(AUDIO_SAMPLE_RATE,
+							AudioFormat.CHANNEL_IN_MONO,
+							AudioFormat.ENCODING_PCM_16BIT);
+			audioRecord = new AudioRecord(AudioSource.MIC, AUDIO_SAMPLE_RATE,
+					AudioFormat.CHANNEL_IN_MONO,
 					AudioFormat.ENCODING_PCM_16BIT, bufferSize);
 			buffer = new short[bufferSize];
 		}
@@ -364,8 +361,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 					}
 				}
 				audioRecord.startRecording();
-				while (recording && totalTime <= maxTime) {
-					audioTimeStamp = (long) (1000 * mCount / (RecorderEnv.AUDIO_SAMPLE_RATE * 1f));
+				while (recording && totalTime <= MAX_RECORD_TIME) {
+					audioTimeStamp = (long) (1000 * mCount / (AUDIO_SAMPLE_RATE * 1f));
 					int readSize = audioRecord.read(buffer, 0, buffer.length);
 					if (readSize > 0) {
 						short[] tempBuf = new short[readSize];
@@ -413,7 +410,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		}
 		int lastTime = progressView.getLastTime();
 		rollbackTime += (frontTime - lastTime);
-		btnFinish.setEnabled(lastTime >= minTime ? true : false);
+		btnFinish.setEnabled(lastTime >= MIN_RECORD_TIME ? true : false);
 	}
 
 	private void saveRecorder() {
@@ -466,8 +463,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 					for (ShortBuffer shortBuffer : audioList) {
 						try {
 							Buffer[] samples = new Buffer[] { shortBuffer };
-							mediaRecorder.record(RecorderEnv.AUDIO_SAMPLE_RATE,
-									samples);
+							mediaRecorder.record(AUDIO_SAMPLE_RATE, samples);
 						} catch (com.googlecode.javacv.FrameRecorder.Exception e) {
 							e.printStackTrace();
 						}
@@ -523,7 +519,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 			} else {
 				stopPauseTime = System.currentTimeMillis();
 				curPausedTime = stopPauseTime - startPauseTime
-						- ((long) (1 / (double) RecorderEnv.VIDEO_FRAME_RATE) * 1000);
+						- ((long) (1 / (double) VIDEO_FRAME_RATE) * 1000);
 				totalPauseTime += curPausedTime;
 			}
 			progressView.setCurrentState(State.START);
