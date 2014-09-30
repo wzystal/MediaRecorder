@@ -208,8 +208,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	}
 
 	private void initRecorder() {
-		frameTime = (VIDEO_BIT_RATE / VIDEO_FRAME_RATE);
-		videoPath = SAVE_DIR_VIDEO + System.currentTimeMillis() + ".mp4";
+		frameTime = VIDEO_BIT_RATE / VIDEO_FRAME_RATE;
+		videoPath = SAVE_DIR_VIDEO + System.currentTimeMillis() + VIDEO_EXTENSION;
 		videoFile = new File(videoPath);
 		mediaRecorder = new FFmpegFrameRecorder(videoPath, 480, 480, 1);
 		mediaRecorder.setFormat(OUTPUT_FORMAT);

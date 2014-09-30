@@ -6,12 +6,13 @@ import android.os.Build;
 import android.os.Environment;
 
 public class RecorderEnv {
-	public static final float MAX_RECORD_TIME = 8000f;
-	public static final float MIN_RECORD_TIME = 2000f;
+	public final static float MAX_RECORD_TIME = 8000f;
+	public final static float MIN_RECORD_TIME = 2000f;
 
-	public static final String SD_PATH = Environment
+	public final static String SD_PATH = Environment
 			.getExternalStorageDirectory().toString();
-	public static final String SAVE_DIR_VIDEO = SD_PATH + "/DCIM/video/";
+	public final static String SAVE_DIR_VIDEO = SD_PATH + "/DCIM/video/";
+	public final static String VIDEO_EXTENSION = ".mp4";
 	public final static String VIDEO_CONTENT_URI = "content://media/external/video/media";
 	public final static int RESOLUTION_HIGH = 1300;
 	public final static int RESOLUTION_MEDIUM = 500;
@@ -29,7 +30,8 @@ public class RecorderEnv {
 	public final static int AUDIO_CODEC = AAC_SUPPORTED ? avcodec.AV_CODEC_ID_AAC
 			: avcodec.AV_CODEC_ID_AMR_NB;
 	public final static int AUDIO_CHANNEL = 1;
-	public final static int AUDIO_BIT_RATE = 96000;// 192000;//AAC_SUPPORTED ? 96000 : 12200;
+	public final static int AUDIO_BIT_RATE = 96000;// 192000;//AAC_SUPPORTED ?
+													// 96000 : 12200;
 	// public final static int VIDEO_BIT_RATE = 1000000;
 	public final static int VIDEO_BIT_RATE = 90000;
 	public final static int AUDIO_SAMPLE_RATE = AAC_SUPPORTED ? 44100 : 8000;
