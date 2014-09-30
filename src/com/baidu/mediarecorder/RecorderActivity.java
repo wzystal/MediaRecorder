@@ -48,8 +48,6 @@ import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 import static com.googlecode.javacv.cpp.opencv_core.IPL_DEPTH_8U;
 
-;
-
 public class RecorderActivity extends Activity implements OnClickListener,
 		OnTouchListener {
 
@@ -59,7 +57,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	private float perWidth;
 	private int screenWidth, screenHeight;// 竖屏为准
 	private int previewWidth, previewHeight;// 横屏为准
-	private Button btnBack, btnFlash, btnSwitchCamera, btnRollback, btnRecord,
+	private Button btnBack, btnFlash, btnSwitch, btnRollback, btnRecord,
 			btnFinish;
 	private ProgressView progressView;
 	private TextView tv_total_time;
@@ -77,6 +75,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	private LinkedList<ArrayList<ShortBuffer>> allAudioList = new LinkedList<ArrayList<ShortBuffer>>();
 
 	private String videoPath;
+	private File videoFile;
 	private Uri uriVideoPath;// 视频文件在系统中存放的url
 
 	private long frameTime = 0;
@@ -102,7 +101,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	private boolean isRecordFinish = false;
 	private boolean recording = false;
 	private boolean isFlashOn = false;// 是否开启闪光灯
-	private boolean isPreviewOn = false;// 是否为前置摄像头
+	private boolean isFrontCamera = false;// 是否为前置摄像头
 	private boolean isFirstFrame = true;// 是否为第一帧
 	private boolean isRollbackSate = false;// 回删状态标识，点击"回删"标记为true，再次点击"回删"会删除最近的视频片段
 	private boolean isRecordingSaved = false;// 是否保存过视频文件
@@ -137,11 +136,11 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		btnBack.setOnClickListener(this);
 		btnFlash = (Button) findViewById(R.id.btn_recorder_flash);
 		btnFlash.setOnClickListener(this);
-		btnSwitchCamera = (Button) findViewById(R.id.btn_recorder_switch_camera);
+		btnSwitch = (Button) findViewById(R.id.btn_recorder_switch_camera);
 		if (getPackageManager().hasSystemFeature(
 				PackageManager.FEATURE_CAMERA_FRONT)) {
-			btnSwitchCamera.setVisibility(View.VISIBLE);
-			btnSwitchCamera.setOnClickListener(this);
+			btnSwitch.setVisibility(View.VISIBLE);
+			btnSwitch.setOnClickListener(this);
 		}
 		btnRollback = (Button) findViewById(R.id.btn_recorder_rollback);
 		btnRollback.setOnClickListener(this);
@@ -210,9 +209,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 	private void initRecorder() {
 		frameTime = (VIDEO_BIT_RATE / VIDEO_FRAME_RATE);
-
-		// fileVideoPath = new File(strVideoPath);
 		videoPath = SAVE_DIR_VIDEO + System.currentTimeMillis() + ".mp4";
+		videoFile = new File(videoPath);
 		mediaRecorder = new FFmpegFrameRecorder(videoPath, 480, 480, 1);
 		mediaRecorder.setFormat(OUTPUT_FORMAT);
 		mediaRecorder.setSampleRate(AUDIO_SAMPLE_RATE);
@@ -223,10 +221,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		mediaRecorder.setAudioCodec(AUDIO_CODEC);
 		mediaRecorder.setVideoBitrate(VIDEO_BIT_RATE);
 		mediaRecorder.setAudioBitrate(AUDIO_BIT_RATE);
-		// 新增语句，设置为编码延迟
-		mediaRecorder.setVideoOption("preset", "superfast");
-		// 实时编码，
-		mediaRecorder.setVideoOption("tune", "zerolatency");
+		mediaRecorder.setVideoOption("preset", "superfast");// 设置编码延迟
+		mediaRecorder.setVideoOption("tune", "zerolatency");// 设置实时编码
 
 		new Thread(new AudioRecordRunnable()).start();
 		try {
@@ -286,7 +282,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 				Log.d("wzy.logic", "开始录制视频...totalTime=" + totalTime);
 				if (totalTime > MAX_RECORD_TIME)
 					return;
-				if (!recording && totalTime > 0)
+				if (totalTime > 0)
 					btnRollback.setEnabled(true);
 				// videoTimeStamp = audioTimeStamp;
 				IplImage iplImage = IplImage.create(previewHeight,
@@ -387,7 +383,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		}
 	}
 
-	private void deleteLastVideo() {
+	private void rollbackVideo() {
 		ArrayList<VideoFrame> lastVideoList = null;
 		long timeStamp1 = 0L, timeStamp2 = 0L;
 		if (allVideoList != null && allVideoList.size() > 0) {
@@ -534,7 +530,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 				progressView.setCurrentState(State.ROLLBACK);
 				isRollbackSate = true;
 			} else {
-				deleteLastVideo();
+				rollbackVideo();
 			}
 			break;
 		case R.id.btn_recorder_finish:

@@ -224,15 +224,6 @@ public class RecorderHelper {
 //	}
 
 
-	public static List<Camera.Size> getResolutionList(Camera camera)
-	{ 
-		Parameters parameters = camera.getParameters();
-		List<Camera.Size> previewSizes = parameters.getSupportedPreviewSizes();
-
-
-		return previewSizes;
-	}
-
 //	public static RecorderParams getRecorderParams(int currentResolution)
 //	{
 //		RecorderParams parameters = new RecorderParams();
@@ -292,16 +283,6 @@ public class RecorderHelper {
 		return selectedResolution;
 
 
-	}
-
-	public static class ResolutionComparator implements Comparator<Camera.Size> {
-		@Override
-		public int compare(Camera.Size size1, Camera.Size size2) {
-			if(size1.height != size2.height)
-				return size1.height -size2.height;
-			else
-				return size1.width - size2.width;
-		}
 	}
 
 

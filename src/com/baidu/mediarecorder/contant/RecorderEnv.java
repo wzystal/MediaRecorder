@@ -23,7 +23,7 @@ public class RecorderEnv {
 
 	public final static boolean AAC_SUPPORTED = Build.VERSION.SDK_INT >= 10;
 	// public final static int VIDEO_CODEC = avcodec.AV_CODEC_ID_MPEG4;
-	public static int VIDEO_CODEC = avcodec.AV_CODEC_ID_H264;
+	public final static int VIDEO_CODEC = avcodec.AV_CODEC_ID_H264;
 	public final static int VIDEO_FRAME_RATE = 30;
 	public final static int VIDEO_QUALITY = 12;
 	public final static int AUDIO_CODEC = AAC_SUPPORTED ? avcodec.AV_CODEC_ID_AAC

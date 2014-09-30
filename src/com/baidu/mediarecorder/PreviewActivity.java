@@ -10,5 +10,7 @@ public class PreviewActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_preview);
 	}
+	
+	
 
 }
