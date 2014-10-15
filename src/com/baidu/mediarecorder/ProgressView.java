@@ -38,7 +38,7 @@ public class ProgressView extends View {
 	private int screenWidth, progressHeight;
 	private Paint progressPaint, flashPaint, minTimePaint, breakPaint,
 			rollbackPaint;
-	private float perWidth, flashWidth = 3f, minTimeWidth = 5f,
+	private float perWidth, flashWidth = 20f, minTimeWidth = 5f,
 			breakWidth = 2f;
 	private LinkedList<Integer> timeList = new LinkedList<Integer>();// 每次暂停录制时，将录制时长记录到队列中
 
@@ -46,7 +46,7 @@ public class ProgressView extends View {
 		displayMetrics = getResources().getDisplayMetrics();
 		screenWidth = displayMetrics.widthPixels;
 		perWidth = screenWidth / RecorderEnv.MAX_RECORD_TIME;
-		Log.d("wzy.size", TAG + ".perWidth=" + perWidth);
+//		Log.d("wzy.size", TAG + ".perWidth=" + perWidth);
 
 		progressPaint = new Paint();
 		flashPaint = new Paint();
@@ -57,19 +57,19 @@ public class ProgressView extends View {
 		setBackgroundColor(Color.parseColor("#222222"));
 
 		progressPaint.setStyle(Paint.Style.FILL);
-		progressPaint.setColor(Color.parseColor("#19e3cf"));
+		progressPaint.setColor(Color.parseColor("#19E3CF"));
 
 		flashPaint.setStyle(Paint.Style.FILL);
-		flashPaint.setColor(Color.parseColor("#FFFF00"));
+		flashPaint.setColor(Color.parseColor("#FFFFFF"));
 
 		minTimePaint.setStyle(Paint.Style.FILL);
-		minTimePaint.setColor(Color.parseColor("#ff0000"));
+		minTimePaint.setColor(Color.parseColor("#FF0000"));
 
 		breakPaint.setStyle(Paint.Style.FILL);
 		breakPaint.setColor(Color.parseColor("#000000"));
 
 		rollbackPaint.setStyle(Paint.Style.FILL);
-		rollbackPaint.setColor(Color.parseColor("#FF3030"));
+		rollbackPaint.setColor(Color.rgb(255, 98, 89));
 	}
 
 	private volatile State currentState = State.PAUSE;
@@ -157,21 +157,25 @@ public class ProgressView extends View {
 		// 手指按下时，绘制新进度条
 		if (currentState == State.START) {
 			perProgress += perWidth * (curSystemTime - initTime);
-			float right = (countWidth + perProgress) >= screenWidth ? screenWidth
-					: (countWidth + perProgress);
-			canvas.drawRect(countWidth, 0, right, progressHeight, progressPaint);
-		}
-		if (drawFlashTime == 0 || curSystemTime - drawFlashTime >= 500) {
-			isVisible = !isVisible;
-			drawFlashTime = System.currentTimeMillis();
-		}
-		if (isVisible) {
-			if (currentState == State.START)
-				canvas.drawRect(countWidth + perProgress, 0, countWidth
-						+ flashWidth + perProgress, progressHeight, flashPaint);
+			if (countWidth + perProgress <= getMeasuredWidth())
+				canvas.drawRect(countWidth, 0, countWidth + perProgress,
+						getMeasuredHeight(), progressPaint);
 			else
+				canvas.drawRect(countWidth, 0, getMeasuredWidth(),
+						getMeasuredHeight(), progressPaint);
+		}
+		if (currentState == State.START) {
+			canvas.drawRect(countWidth + perProgress, 0, countWidth
+					+ flashWidth + perProgress, getMeasuredHeight(), flashPaint);
+		} else {
+			if (drawFlashTime == 0 || curSystemTime - drawFlashTime >= 800) {
+				isVisible = !isVisible;
+				drawFlashTime = System.currentTimeMillis();
+			}
+			if (isVisible){
 				canvas.drawRect(countWidth, 0, countWidth + flashWidth,
-						progressHeight, flashPaint);
+						getMeasuredHeight(), flashPaint);
+			}
 		}
 		initTime = System.currentTimeMillis();
 		invalidate();

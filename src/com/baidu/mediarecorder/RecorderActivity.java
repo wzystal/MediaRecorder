@@ -209,7 +209,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 	private void initRecorder() {
 		frameTime = VIDEO_BIT_RATE / VIDEO_FRAME_RATE;
-		videoPath = SAVE_DIR_VIDEO + System.currentTimeMillis() + VIDEO_EXTENSION;
+		videoPath = SAVE_DIR_VIDEO + System.currentTimeMillis()
+				+ VIDEO_EXTENSION;
 		videoFile = new File(videoPath);
 		mediaRecorder = new FFmpegFrameRecorder(videoPath, 480, 480, 1);
 		mediaRecorder.setFormat(OUTPUT_FORMAT);
@@ -221,8 +222,9 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		mediaRecorder.setAudioCodec(AUDIO_CODEC);
 		mediaRecorder.setVideoBitrate(VIDEO_BIT_RATE);
 		mediaRecorder.setAudioBitrate(AUDIO_BIT_RATE);
-		mediaRecorder.setVideoOption("preset", "superfast");// 设置编码延迟
-		mediaRecorder.setVideoOption("tune", "zerolatency");// 设置实时编码
+
+		mediaRecorder.setVideoOption("preset", "superfast");// 调节编码速度，速度越快，文件体积越大
+		mediaRecorder.setVideoOption("tune", "zerolatency");// 根据tune指定的需求做视觉优化
 
 		new Thread(new AudioRecordRunnable()).start();
 		try {
@@ -292,8 +294,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 				iplImage.getByteBuffer().put(tempData);
 				long timestamp = frameTime * frameNum;
 				frameNum++;
-				VideoFrame videoFrame = new VideoFrame(timestamp, iplImage,
-						data);
+				VideoFrame videoFrame = new VideoFrame(timestamp, data,
+						iplImage);
 				tempVideoList.add(videoFrame);
 			}
 		}
@@ -460,7 +462,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 						videoFrame = videoList.get(i);
 						mediaRecorder.setTimestamp(videoFrame.getTimeStamp());
 						try {
-							mediaRecorder.record(videoFrame.getImage());
+							mediaRecorder.record(videoFrame.getIplImage());
 						} catch (com.googlecode.javacv.FrameRecorder.Exception e) {
 							e.printStackTrace();
 						}

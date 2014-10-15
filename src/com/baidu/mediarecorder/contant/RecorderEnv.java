@@ -23,8 +23,8 @@ public class RecorderEnv {
 	public final static int RESOLUTION_LOW_VALUE = 0;
 
 	public final static boolean AAC_SUPPORTED = Build.VERSION.SDK_INT >= 10;
-	// public final static int VIDEO_CODEC = avcodec.AV_CODEC_ID_MPEG4;
-	public final static int VIDEO_CODEC = avcodec.AV_CODEC_ID_H264;
+	public final static int VIDEO_CODEC = avcodec.AV_CODEC_ID_MPEG4;
+//	public final static int VIDEO_CODEC = avcodec.AV_CODEC_ID_H264;
 	public final static int VIDEO_FRAME_RATE = 30;
 	public final static int VIDEO_QUALITY = 12;
 	public final static int AUDIO_CODEC = AAC_SUPPORTED ? avcodec.AV_CODEC_ID_AAC
@@ -33,7 +33,7 @@ public class RecorderEnv {
 	public final static int AUDIO_BIT_RATE = 96000;// 192000;//AAC_SUPPORTED ?
 													// 96000 : 12200;
 	// public final static int VIDEO_BIT_RATE = 1000000;
-	public final static int VIDEO_BIT_RATE = 90000;
+	public final static int VIDEO_BIT_RATE = 1000000;
 	public final static int AUDIO_SAMPLE_RATE = AAC_SUPPORTED ? 44100 : 8000;
 	public final static String OUTPUT_FORMAT = AAC_SUPPORTED ? "mp4" : "3gp";
 

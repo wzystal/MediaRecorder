@@ -34,9 +34,6 @@ public class CameraHelper {
 		}
 		return previewSize;
 	}
-
-	// 摄像头对焦
-	
 	
 	private static class SizeComparator implements Comparator<Size> {
 		@Override
@@ -47,4 +44,6 @@ public class CameraHelper {
 				return size1.width - size2.width;
 		}
 	}
+	
+	// 摄像头对焦
 }
