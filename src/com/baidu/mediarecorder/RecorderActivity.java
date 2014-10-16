@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -14,6 +15,7 @@ import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
@@ -286,6 +288,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 					return;
 				if (totalTime > 0)
 					btnRollback.setEnabled(true);
+				showRecordTime(totalTime);
 				// videoTimeStamp = audioTimeStamp;
 				IplImage iplImage = IplImage.create(previewHeight,
 						previewWidth, IPL_DEPTH_8U, 2);
@@ -383,6 +386,27 @@ public class RecorderActivity extends Activity implements OnClickListener,
 				audioRecord.release();
 			}
 		}
+	}
+	
+	// 显示当前录制时长
+	private void showRecordTime(float totalTime) {
+		DecimalFormat df = new DecimalFormat("0.0");
+		// LogUtils.d("wzy", "<showRecordTime> totalTime = " + totalTime);
+		double time = totalTime / 1000.0;
+		if (time < 0)
+			time = 0;
+		if (time > 8)
+			time = 8.0;
+		tv_total_time.setText(df.format(time) + "s");
+		tv_total_time.setTextColor(Color.parseColor("#DDDDDD"));
+		int timeBoxWidth = tv_total_time.getWidth();
+		float left = totalTime * perWidth - timeBoxWidth / 2 + 5;
+		if (left <= 0)
+			left = 0;
+		if (left > displayMetrics.widthPixels - timeBoxWidth)
+			left = displayMetrics.widthPixels - timeBoxWidth;
+		timeLayoutParams.leftMargin = (int) left;
+		tv_total_time.setLayoutParams(timeLayoutParams);
 	}
 
 	private void rollbackVideo() {
