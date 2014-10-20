@@ -76,6 +76,7 @@ import static com.googlecode.javacv.cpp.swresample.*;
 import static com.googlecode.javacv.cpp.swscale.*;
 
 /**
+ *
  * @author Samuel Audet
  */
 public class FFmpegFrameRecorder extends FrameRecorder {

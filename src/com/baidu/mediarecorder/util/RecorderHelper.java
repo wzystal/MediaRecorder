@@ -10,10 +10,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -21,12 +19,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
-import android.hardware.Camera.Parameters;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.MediaStore.Video;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.View;
@@ -43,50 +39,47 @@ import com.baidu.mediarecorder.contant.RecorderEnv;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 import com.googlecode.javacv.cpp.opencv_highgui.CvCapture;
 
-
 public class RecorderHelper {
-	public static  ContentValues videoContentValues = null;
-	public static String getRecordingTimeFromMillis(long millis)
-	{
+	public static ContentValues videoContentValues = null;
+
+	public static String getRecordingTimeFromMillis(long millis) {
 		String strRecordingTime = null;
 		int seconds = (int) (millis / 1000);
 		int minutes = seconds / 60;
 		int hours = minutes / 60;
 
-		if(hours >= 0 && hours < 10)
+		if (hours >= 0 && hours < 10)
 			strRecordingTime = "0" + hours + ":";
 		else
 			strRecordingTime = hours + ":";
 
-		if(hours > 0)
+		if (hours > 0)
 			minutes = minutes % 60;
 
-		if(minutes >= 0 && minutes < 10)
+		if (minutes >= 0 && minutes < 10)
 			strRecordingTime += "0" + minutes + ":";
 		else
 			strRecordingTime += minutes + ":";
 
 		seconds = seconds % 60;
 
-		if(seconds >= 0 && seconds < 10)
-			strRecordingTime += "0" + seconds ;
+		if (seconds >= 0 && seconds < 10)
+			strRecordingTime += "0" + seconds;
 		else
-			strRecordingTime += seconds ;
+			strRecordingTime += seconds;
 
 		return strRecordingTime;
 
 	}
 
-
-	public static int determineDisplayOrientation(Activity activity, int defaultCameraId) {
+	public static int determineDisplayOrientation(Activity activity,
+			int defaultCameraId) {
 		int displayOrientation = 0;
-		if(Build.VERSION.SDK_INT >  Build.VERSION_CODES.FROYO)
-		{
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.FROYO) {
 			CameraInfo cameraInfo = new CameraInfo();
 			Camera.getCameraInfo(defaultCameraId, cameraInfo);
 
-			int degrees  = getRotationAngle(activity);
-
+			int degrees = getRotationAngle(activity);
 
 			if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
 				displayOrientation = (cameraInfo.orientation + degrees) % 360;
@@ -98,10 +91,10 @@ public class RecorderHelper {
 		return displayOrientation;
 	}
 
-	public static int getRotationAngle(Activity activity)
-	{
-		int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-		int degrees  = 0;
+	public static int getRotationAngle(Activity activity) {
+		int rotation = activity.getWindowManager().getDefaultDisplay()
+				.getRotation();
+		int degrees = 0;
 
 		switch (rotation) {
 		case Surface.ROTATION_0:
@@ -123,9 +116,8 @@ public class RecorderHelper {
 		return degrees;
 	}
 
-	public static int getRotationAngle(int rotation)
-	{
-		int degrees  = 0;
+	public static int getRotationAngle(int rotation) {
+		int degrees = 0;
 		switch (rotation) {
 		case Surface.ROTATION_0:
 			degrees = 0;
@@ -145,47 +137,51 @@ public class RecorderHelper {
 		}
 		return degrees;
 	}
-	
-//	public static String createImagePath(Context context){
-//		long dateTaken = System.currentTimeMillis();
-//		String title = RecorderEnv.FILE_START_NAME + dateTaken;
-//		String filename = title + RecorderEnv.IMAGE_EXTENSION;
-//		
-//		String dirPath = Environment.getExternalStorageDirectory()+"/Android/data/" + context.getPackageName()+"/video";
-//		File file = new File(dirPath);
-//		if(!file.exists() || !file.isDirectory())
-//			file.mkdirs();
-//		String filePath = dirPath + "/" + filename;
-//		return filePath;
-//	}
-//
-//	public static String createFinalPath(Context context)
-//	{
-//		long dateTaken = System.currentTimeMillis();
-//		String title = RecorderEnv.FILE_START_NAME + dateTaken;
-//		String filename = title + RecorderEnv.VIDEO_EXTENSION;
-//		String filePath = genrateFilePath(context,String.valueOf(dateTaken), true, null);
-//		
-//		ContentValues values = new ContentValues(7);
-//		values.put(Video.Media.TITLE, title);
-//		values.put(Video.Media.DISPLAY_NAME, filename);
-//		values.put(Video.Media.DATE_TAKEN, dateTaken);
-//		values.put(Video.Media.MIME_TYPE, "video/3gpp");
-//		values.put(Video.Media.DATA, filePath);
-//		videoContentValues = values;
-//
-//		return filePath;
-//	}
-	
-	public static void deleteTempVideo(Context context){
-		final String dirPath = Environment.getExternalStorageDirectory()+"/Android/data/" + context.getPackageName()+"/video";
+
+	// public static String createImagePath(Context context){
+	// long dateTaken = System.currentTimeMillis();
+	// String title = RecorderEnv.FILE_START_NAME + dateTaken;
+	// String filename = title + RecorderEnv.IMAGE_EXTENSION;
+	//
+	// String dirPath =
+	// Environment.getExternalStorageDirectory()+"/Android/data/" +
+	// context.getPackageName()+"/video";
+	// File file = new File(dirPath);
+	// if(!file.exists() || !file.isDirectory())
+	// file.mkdirs();
+	// String filePath = dirPath + "/" + filename;
+	// return filePath;
+	// }
+	//
+	// public static String createFinalPath(Context context)
+	// {
+	// long dateTaken = System.currentTimeMillis();
+	// String title = RecorderEnv.FILE_START_NAME + dateTaken;
+	// String filename = title + RecorderEnv.VIDEO_EXTENSION;
+	// String filePath = genrateFilePath(context,String.valueOf(dateTaken),
+	// true, null);
+	//
+	// ContentValues values = new ContentValues(7);
+	// values.put(Video.Media.TITLE, title);
+	// values.put(Video.Media.DISPLAY_NAME, filename);
+	// values.put(Video.Media.DATE_TAKEN, dateTaken);
+	// values.put(Video.Media.MIME_TYPE, "video/3gpp");
+	// values.put(Video.Media.DATA, filePath);
+	// videoContentValues = values;
+	//
+	// return filePath;
+	// }
+
+	public static void deleteTempVideo(Context context) {
+		final String dirPath = Environment.getExternalStorageDirectory()
+				+ "/Android/data/" + context.getPackageName() + "/video";
 		new Thread(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				File file = new File(dirPath);
-				if(file != null && file.isDirectory()){
-					for(File file2 :file.listFiles()){
+				if (file != null && file.isDirectory()) {
+					for (File file2 : file.listFiles()) {
 						file2.delete();
 					}
 				}
@@ -193,115 +189,105 @@ public class RecorderHelper {
 		}).start();
 	}
 
-//	private static String genrateFilePath(Context context,String uniqueId, boolean isFinalPath, File tempFolderPath)
-//	{
-//		String fileName = RecorderEnv.FILE_START_NAME + uniqueId + RecorderEnv.VIDEO_EXTENSION;
-//		String dirPath = Environment.getExternalStorageDirectory()+"/Android/data/" + context.getPackageName()+"/video";
-//		if(isFinalPath)
-//		{
-//			File file = new File(dirPath);
-//			if(!file.exists() || !file.isDirectory())
-//				file.mkdirs();
-//		}
-//		else
-//			dirPath = tempFolderPath.getAbsolutePath();
-//		String filePath = dirPath + "/" + fileName;
-//		return filePath;
-//	}
-//	public static String createTempPath(Context context,File tempFolderPath )
-//	{
-//		long dateTaken = System.currentTimeMillis();
-//		String filePath = genrateFilePath(context,String.valueOf(dateTaken), false, tempFolderPath);
-//		return filePath;
-//	}
+	// private static String genrateFilePath(Context context,String uniqueId,
+	// boolean isFinalPath, File tempFolderPath)
+	// {
+	// String fileName = RecorderEnv.FILE_START_NAME + uniqueId +
+	// RecorderEnv.VIDEO_EXTENSION;
+	// String dirPath =
+	// Environment.getExternalStorageDirectory()+"/Android/data/" +
+	// context.getPackageName()+"/video";
+	// if(isFinalPath)
+	// {
+	// File file = new File(dirPath);
+	// if(!file.exists() || !file.isDirectory())
+	// file.mkdirs();
+	// }
+	// else
+	// dirPath = tempFolderPath.getAbsolutePath();
+	// String filePath = dirPath + "/" + fileName;
+	// return filePath;
+	// }
+	// public static String createTempPath(Context context,File tempFolderPath )
+	// {
+	// long dateTaken = System.currentTimeMillis();
+	// String filePath = genrateFilePath(context,String.valueOf(dateTaken),
+	// false, tempFolderPath);
+	// return filePath;
+	// }
 
+	// public static File getTempFolderPath()
+	// {
+	// File tempFolder = new File(RecorderEnv.TEMP_FOLDER_PATH +"_"
+	// +System.currentTimeMillis());
+	// return tempFolder;
+	// }
 
+	// public static RecorderParams getRecorderParams(int currentResolution)
+	// {
+	// RecorderParams parameters = new RecorderParams();
+	// if(currentResolution == RecorderEnv.RESOLUTION_HIGH_VALUE)
+	// {
+	// parameters.setAudioBitrate(128000);
+	// parameters.setVideoQuality(0);
+	// }
+	// else if(currentResolution == RecorderEnv.RESOLUTION_MEDIUM_VALUE)
+	// {
+	// parameters.setAudioBitrate(128000);
+	// parameters.setVideoQuality(5);
+	// }
+	// else if(currentResolution == RecorderEnv.RESOLUTION_LOW_VALUE)
+	// {
+	// parameters.setAudioBitrate(96000);
+	// parameters.setVideoQuality(20);
+	// }
+	// return parameters;
+	// }
 
-//	public static File getTempFolderPath()
-//	{
-//		File tempFolder = new File(RecorderEnv.TEMP_FOLDER_PATH +"_" +System.currentTimeMillis());
-//		return tempFolder;
-//	}
-
-
-//	public static RecorderParams getRecorderParams(int currentResolution)
-//	{
-//		RecorderParams parameters = new RecorderParams();
-//		if(currentResolution ==  RecorderEnv.RESOLUTION_HIGH_VALUE)
-//		{
-//			parameters.setAudioBitrate(128000);
-//			parameters.setVideoQuality(0);
-//		}
-//		else if(currentResolution ==  RecorderEnv.RESOLUTION_MEDIUM_VALUE)
-//		{
-//			parameters.setAudioBitrate(128000);
-//			parameters.setVideoQuality(5);
-//		}
-//		else if(currentResolution == RecorderEnv.RESOLUTION_LOW_VALUE)
-//		{
-//			parameters.setAudioBitrate(96000);
-//			parameters.setVideoQuality(20);
-//		}
-//		return parameters;
-//	}
-
-	public static int calculateMargin(int previewWidth, int screenWidth)
-	{
+	public static int calculateMargin(int previewWidth, int screenWidth) {
 		int margin = 0;
-		if(previewWidth <= RecorderEnv.RESOLUTION_LOW)
-		{
-			margin = (int) (screenWidth*0.12);
-		}
-		else if(previewWidth > RecorderEnv.RESOLUTION_LOW && previewWidth <= RecorderEnv.RESOLUTION_MEDIUM)
-		{
-			margin = (int) (screenWidth*0.08);
-		}
-		else if(previewWidth > RecorderEnv.RESOLUTION_MEDIUM && previewWidth <= RecorderEnv.RESOLUTION_HIGH)
-		{
-			margin = (int) (screenWidth*0.08);
+		if (previewWidth <= RecorderEnv.RESOLUTION_LOW) {
+			margin = (int) (screenWidth * 0.12);
+		} else if (previewWidth > RecorderEnv.RESOLUTION_LOW
+				&& previewWidth <= RecorderEnv.RESOLUTION_MEDIUM) {
+			margin = (int) (screenWidth * 0.08);
+		} else if (previewWidth > RecorderEnv.RESOLUTION_MEDIUM
+				&& previewWidth <= RecorderEnv.RESOLUTION_HIGH) {
+			margin = (int) (screenWidth * 0.08);
 		}
 		return margin;
 
-
 	}
 
-	public static int setSelectedResolution(int previewHeight)
-	{
+	public static int setSelectedResolution(int previewHeight) {
 		int selectedResolution = 0;
-		if(previewHeight <= RecorderEnv.RESOLUTION_LOW)
-		{
+		if (previewHeight <= RecorderEnv.RESOLUTION_LOW) {
 			selectedResolution = 0;
-		}
-		else if(previewHeight > RecorderEnv.RESOLUTION_LOW && previewHeight <= RecorderEnv.RESOLUTION_MEDIUM)
-		{
+		} else if (previewHeight > RecorderEnv.RESOLUTION_LOW
+				&& previewHeight <= RecorderEnv.RESOLUTION_MEDIUM) {
 			selectedResolution = 1;
-		}
-		else if(previewHeight > RecorderEnv.RESOLUTION_MEDIUM && previewHeight <= RecorderEnv.RESOLUTION_HIGH)
-		{
+		} else if (previewHeight > RecorderEnv.RESOLUTION_MEDIUM
+				&& previewHeight <= RecorderEnv.RESOLUTION_HIGH) {
 			selectedResolution = 2;
 		}
 		return selectedResolution;
 
-
 	}
 
-
-	public static void concatenateMultipleFiles(String inpath, String outpath)
-	{
+	public static void concatenateMultipleFiles(String inpath, String outpath) {
 		File Folder = new File(inpath);
 		File files[];
 		files = Folder.listFiles();
 
-		if(files.length>0)
-		{
-			for(int i = 0;i<files.length; i++){
+		if (files.length > 0) {
+			for (int i = 0; i < files.length; i++) {
 				Reader in = null;
 				Writer out = null;
 				try {
-					in =   new FileReader(files[i]);
-					out = new FileWriter(outpath , true); 
+					in = new FileReader(files[i]);
+					out = new FileWriter(outpath, true);
 					in.close();
-					out.close(); 
+					out.close();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -309,28 +295,25 @@ public class RecorderHelper {
 		}
 	}
 
-
-	public static String getEncodingLibraryPath(Context paramContext)
-	{
-		return paramContext.getApplicationInfo().nativeLibraryDir + "/libencoding.so";
+	public static String getEncodingLibraryPath(Context paramContext) {
+		return paramContext.getApplicationInfo().nativeLibraryDir
+				+ "/libencoding.so";
 	}
 
-	private static HashMap<String, String> getMetaData()
-	{
+	private static HashMap<String, String> getMetaData() {
 		HashMap<String, String> localHashMap = new HashMap<String, String>();
-		localHashMap.put("creation_time", new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSSZ").format(new Date()));
+		localHashMap.put("creation_time", new SimpleDateFormat(
+				"yyyy_MM_dd_HH_mm_ss_SSSZ").format(new Date()));
 		return localHashMap;
 	}
 
-	public static int getTimeStampInNsFromSampleCounted(int paramInt)
-	{
-		return (int)(paramInt / 0.0441D);
+	public static int getTimeStampInNsFromSampleCounted(int paramInt) {
+		return (int) (paramInt / 0.0441D);
 	}
 
-	public static Toast showToast(Context context, String textMessage, int timeDuration)
-	{
-		if (null == context)
-		{
+	public static Toast showToast(Context context, String textMessage,
+			int timeDuration) {
+		if (null == context) {
 			return null;
 		}
 		textMessage = (null == textMessage ? "Oops! " : textMessage.trim());
@@ -338,7 +321,7 @@ public class RecorderHelper {
 		t.show();
 		return t;
 	}
-	
+
 	/**
 	 * 公共弹窗
 	 * 
@@ -351,7 +334,8 @@ public class RecorderHelper {
 	 * @param handler
 	 *            :Handler 传入的需要回调的handler信息，可作为回调方法是用，msg.what = 1时为操作完成状态符
 	 */
-	public static void showDialog(Context context, String title, String content, int type, final Handler handler){
+	public static void showDialog(Context context, String title,
+			String content, int type, final Handler handler) {
 		final Dialog dialog = new Dialog(context, R.style.Dialog_loading);
 		dialog.setCancelable(true);
 		// 设置像是内容模板
@@ -366,28 +350,29 @@ public class RecorderHelper {
 		View line_hori_center = view.findViewById(R.id.line_hori_center);// 中竖线
 		confirmButton.setVisibility(View.GONE);// 默认隐藏取消按钮
 		line_hori_center.setVisibility(View.GONE);
-		TextView textView = (TextView) view.findViewById(R.id.setting_account_bind_text);
+		TextView textView = (TextView) view
+				.findViewById(R.id.setting_account_bind_text);
 
 		// 设置对话框的宽度
 		Window dialogWindow = dialog.getWindow();
 		WindowManager.LayoutParams lp = dialogWindow.getAttributes();
-		lp.width = (int) (context.getResources().getDisplayMetrics().density*288);
+		lp.width = (int) (context.getResources().getDisplayMetrics().density * 288);
 		dialogWindow.setAttributes(lp);
 
 		// 设置显示类型
-		if(type != 1 && type != 2){
+		if (type != 1 && type != 2) {
 			type = 1;
 		}
 		dialogTitle.setText(title);// 设置标题
 		textView.setText(content); // 设置提示内容
 
 		// 确认按钮操作
-		if(type == 1 || type == 2){
+		if (type == 1 || type == 2) {
 			confirmButton.setVisibility(View.VISIBLE);
-			confirmButton.setOnClickListener(new OnClickListener(){
+			confirmButton.setOnClickListener(new OnClickListener() {
 				@Override
-				public void onClick(View v){
-					if(handler != null){
+				public void onClick(View v) {
+					if (handler != null) {
 						Message msg = handler.obtainMessage();
 						msg.what = 1;
 						handler.sendMessage(msg);
@@ -397,13 +382,13 @@ public class RecorderHelper {
 			});
 		}
 		// 取消按钮事件
-		if(type == 2){
+		if (type == 2) {
 			cancelButton.setVisibility(View.VISIBLE);
 			line_hori_center.setVisibility(View.VISIBLE);
-			cancelButton.setOnClickListener(new OnClickListener(){
+			cancelButton.setOnClickListener(new OnClickListener() {
 				@Override
-				public void onClick(View v){
-					if(handler != null){
+				public void onClick(View v) {
+					if (handler != null) {
 						Message msg = handler.obtainMessage();
 						msg.what = 0;
 						handler.sendMessage(msg);
@@ -412,13 +397,14 @@ public class RecorderHelper {
 				}
 			});
 		}
-		dialog.addContentView(view, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+		dialog.addContentView(view, new LayoutParams(LayoutParams.MATCH_PARENT,
+				LayoutParams.MATCH_PARENT));
 		dialog.setCancelable(true);// 点击返回键关闭
 		dialog.setCanceledOnTouchOutside(true);// 点击外部关闭
 		dialog.show();
 	}
-	
-	public IplImage getFrame(String filePath){
+
+	public IplImage getFrame(String filePath) {
 		CvCapture capture = cvCreateFileCapture(filePath);
 		IplImage image = cvQueryFrame(capture);
 		return image;

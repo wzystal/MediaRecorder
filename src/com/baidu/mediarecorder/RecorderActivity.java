@@ -211,9 +211,15 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 	private void initRecorder() {
 		frameTime = VIDEO_BIT_RATE / VIDEO_FRAME_RATE;
-		videoPath = SAVE_DIR_VIDEO + System.currentTimeMillis()
-				+ VIDEO_EXTENSION;
+		File videoDir = new File(VIDEO_DIR);
+		if (!videoDir.exists()) {
+			videoDir.mkdir();
+		}
+		videoPath = VIDEO_DIR + System.currentTimeMillis() + VIDEO_EXTENSION;
 		videoFile = new File(videoPath);
+		if (videoFile.exists()) {
+			videoFile.delete();
+		}
 		mediaRecorder = new FFmpegFrameRecorder(videoPath, 480, 480, 1);
 		mediaRecorder.setFormat(OUTPUT_FORMAT);
 		mediaRecorder.setSampleRate(AUDIO_SAMPLE_RATE);
@@ -225,15 +231,17 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		mediaRecorder.setVideoBitrate(VIDEO_BIT_RATE);
 		mediaRecorder.setAudioBitrate(AUDIO_BIT_RATE);
 
-		mediaRecorder.setVideoOption("preset", "superfast");// 调节编码速度，速度越快，文件体积越大
-		mediaRecorder.setVideoOption("tune", "zerolatency");// 根据tune指定的需求做视觉优化
+		// mediaRecorder.setVideoOption("preset", "superfast");//
+		// 调节编码速度，速度越快，文件体积越大
+		// mediaRecorder.setVideoOption("tune", "zerolatency");//
+		// 根据tune指定的需求做视觉优化
 
-		new Thread(new AudioRecordRunnable()).start();
 		try {
 			mediaRecorder.start();
 		} catch (com.googlecode.javacv.FrameRecorder.Exception e) {
 			e.printStackTrace();
 		}
+		new Thread(new AudioRecordRunnable()).start();
 
 	}
 
@@ -270,11 +278,11 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
 			Log.d("wzy.lifecycle", TAG + ".surfaceDestroyed() called!");
-			if (null != camera) {
-				camera.stopPreview();
-				camera.release();
-				camera = null;
-			}
+//			if (null != camera) {
+//				camera.stopPreview();
+//				camera.release();
+//				camera = null;
+//			}
 		}
 
 		@Override
@@ -288,7 +296,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 					return;
 				if (totalTime > 0)
 					btnRollback.setEnabled(true);
-				showRecordTime(totalTime);
+				// showRecordTime(totalTime);
 				// videoTimeStamp = audioTimeStamp;
 				IplImage iplImage = IplImage.create(previewHeight,
 						previewWidth, IPL_DEPTH_8U, 2);
@@ -387,7 +395,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 			}
 		}
 	}
-	
+
 	// 显示当前录制时长
 	private void showRecordTime(float totalTime) {
 		DecimalFormat df = new DecimalFormat("0.0");
@@ -508,28 +516,28 @@ public class RecorderActivity extends Activity implements OnClickListener,
 					// publishProgress(60 + perProgress2 * count2);
 					for (ShortBuffer shortBuffer : audioList) {
 						try {
-							Buffer[] samples = new Buffer[] { shortBuffer };
-							mediaRecorder.record(AUDIO_SAMPLE_RATE, samples);
+							mediaRecorder.record(AUDIO_SAMPLE_RATE,
+									new Buffer[] { shortBuffer });
 						} catch (com.googlecode.javacv.FrameRecorder.Exception e) {
 							e.printStackTrace();
 						}
-					}
+					} 
 				}
 				publishProgress(90);
-				Uri videoTable = Uri.parse(VIDEO_CONTENT_URI);
-				ContentValues values = new ContentValues(7);
-				values.put(Video.Media.TITLE, "video");
-				values.put(Video.Media.DISPLAY_NAME, "video.mp4");
-				values.put(Video.Media.DATE_TAKEN, System.currentTimeMillis());
-				values.put(Video.Media.MIME_TYPE, "video/3gpp");
-				values.put(Video.Media.DATA, videoPath);
-				try {
-					uriVideoPath = getContentResolver().insert(videoTable,
-							values);
-				} catch (Throwable e) {
-					uriVideoPath = null;
-					e.printStackTrace();
-				}
+//				Uri videoTable = Uri.parse(VIDEO_CONTENT_URI);
+//				ContentValues values = new ContentValues(7);
+//				values.put(Video.Media.TITLE, "video");
+//				values.put(Video.Media.DISPLAY_NAME, "video.mp4");
+//				values.put(Video.Media.DATE_TAKEN, System.currentTimeMillis());
+//				values.put(Video.Media.MIME_TYPE, "video/3gpp");
+//				values.put(Video.Media.DATA, videoPath);
+//				try {
+//					uriVideoPath = getContentResolver().insert(videoTable,
+//							values);
+//				} catch (Throwable e) {
+//					uriVideoPath = null;
+//					e.printStackTrace();
+//				}
 				publishProgress(100);
 				return null;
 			}

@@ -11,7 +11,7 @@ public class RecorderEnv {
 
 	public final static String SD_PATH = Environment
 			.getExternalStorageDirectory().toString();
-	public final static String SAVE_DIR_VIDEO = SD_PATH + "/DCIM/video/";
+	public final static String VIDEO_DIR = SD_PATH + "/MediaRecorder/";
 	public final static String VIDEO_EXTENSION = ".mp4";
 	public final static String VIDEO_CONTENT_URI = "content://media/external/video/media";
 	public final static int RESOLUTION_HIGH = 1300;
