@@ -6,7 +6,7 @@
     <RelativeLayout
         android:id="@+id/title_bar_recorder"
         android:layout_width="match_parent"
-        android:layout_height="80dp" >
+        android:layout_height="60dp" >
 
         <Button
             android:id="@+id/btn_recorder_back"

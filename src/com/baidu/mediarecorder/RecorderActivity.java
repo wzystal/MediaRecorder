@@ -199,12 +199,12 @@ public class RecorderActivity extends Activity implements OnClickListener,
 				surfaceLayout = (RelativeLayout) findViewById(R.id.layout_recorder_surface);
 				if (null != surfaceLayout && surfaceLayout.getChildCount() > 0)
 					surfaceLayout.removeAllViews();
-				RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+				RelativeLayout.LayoutParams lpCameraView = new RelativeLayout.LayoutParams(
 						screenWidth,
 						(int) (screenWidth * (previewWidth / (previewHeight * 1f))));
-				layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP,
+				lpCameraView.addRule(RelativeLayout.ALIGN_PARENT_TOP,
 						RelativeLayout.TRUE);
-				surfaceLayout.addView(cameraView, layoutParams);
+				surfaceLayout.addView(cameraView, lpCameraView);
 			}
 		}.execute();
 	}
