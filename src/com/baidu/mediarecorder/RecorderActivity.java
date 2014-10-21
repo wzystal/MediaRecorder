@@ -15,7 +15,11 @@ import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
@@ -27,7 +31,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore.Video;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -36,10 +39,12 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 import com.baidu.mediarecorder.ProgressView.State;
 import static com.baidu.mediarecorder.contant.RecorderEnv.*;
 import com.baidu.mediarecorder.util.CameraHelper;
@@ -248,6 +253,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	class CameraView extends SurfaceView implements SurfaceHolder.Callback,
 			Camera.PreviewCallback {
 		private SurfaceHolder mHolder;
+		private Bitmap bitmapFocus;
+		private FocusView focusView;
 
 		public CameraView(Context context) {
 			super(context);
@@ -255,6 +262,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 			mHolder.addCallback(CameraView.this);
 			mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 			camera.setPreviewCallback(CameraView.this);
+			bitmapFocus = BitmapFactory.decodeResource(getResources(),
+					R.drawable.box_recorder_focus);
 		}
 
 		@Override
@@ -278,11 +287,11 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
 			Log.d("wzy.lifecycle", TAG + ".surfaceDestroyed() called!");
-//			if (null != camera) {
-//				camera.stopPreview();
-//				camera.release();
-//				camera = null;
-//			}
+			// if (null != camera) {
+			// camera.stopPreview();
+			// camera.release();
+			// camera = null;
+			// }
 		}
 
 		@Override
@@ -308,6 +317,87 @@ public class RecorderActivity extends Activity implements OnClickListener,
 				VideoFrame videoFrame = new VideoFrame(timestamp, data,
 						iplImage);
 				tempVideoList.add(videoFrame);
+			}
+		}
+
+		// 触摸定点对焦
+		@Override
+		public boolean onTouchEvent(MotionEvent event) {
+			switch (event.getAction()) {
+			case MotionEvent.ACTION_DOWN:
+				int fx = (int) event.getX();
+				int fy = (int) event.getY();
+				if (fy > screenWidth)
+					return true;
+				int w = bitmapFocus.getWidth(),
+				h = bitmapFocus.getHeight();
+				fx = CameraHelper.clamp(fx, w / 2, screenWidth - w / 2);
+				fy = CameraHelper.clamp(fy, h / 2, screenWidth - h / 2);
+				for (int i = 0; i < surfaceLayout.getChildCount(); i++) {
+					if (focusView == surfaceLayout.getChildAt(i)) {
+						surfaceLayout.removeViewAt(i);
+						break;
+					}
+				}
+				focusView = new FocusView(RecorderActivity.this, fx - w / 2, fy
+						- h / 2, bitmapFocus);
+				surfaceLayout.addView(focusView, new LayoutParams(
+						LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+				touch2Focus(fx, fy);
+				break;
+			case MotionEvent.ACTION_UP:
+				try {
+					Thread.sleep(800);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				for (int i = 0; i < surfaceLayout.getChildCount(); i++) {
+					if (focusView == surfaceLayout.getChildAt(i)) {
+						surfaceLayout.removeViewAt(i);
+						break;
+					}
+				}
+				break;
+			default:
+				break;
+			}
+			return true;
+		}
+
+		private void touch2Focus(int x, int y) {
+			Rect focusRect = CameraHelper.getFocusArea(x, y, screenWidth,
+					screenWidth, 300);
+			List<Camera.Area> areas = new ArrayList<Camera.Area>();
+			areas.add(new Camera.Area(focusRect, 1000));
+			if (cameraParams.getMaxNumFocusAreas() > 0) {
+				cameraParams.setFocusAreas(areas);// 设置对焦区域
+			}
+			if (cameraParams.getMaxNumMeteringAreas() > 0) {
+				cameraParams.setMeteringAreas(areas);// 设置测光区域
+			}
+			camera.cancelAutoFocus();
+			// if (focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO))
+			cameraParams.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+			camera.setParameters(cameraParams);
+			camera.autoFocus(null);
+		}
+
+		// 对焦框
+		class FocusView extends View {
+			int left, top;
+			Bitmap bitmap;
+
+			public FocusView(Context context, int left, int top, Bitmap bitmap) {
+				super(context);
+				this.left = left;
+				this.top = top;
+				this.bitmap = bitmap;
+			}
+
+			@Override
+			protected void onDraw(Canvas canvas) {
+				canvas.drawBitmap(bitmap, left, top, null);
+				super.onDraw(canvas);
 			}
 		}
 	}
@@ -521,23 +611,24 @@ public class RecorderActivity extends Activity implements OnClickListener,
 						} catch (com.googlecode.javacv.FrameRecorder.Exception e) {
 							e.printStackTrace();
 						}
-					} 
+					}
 				}
 				publishProgress(90);
-//				Uri videoTable = Uri.parse(VIDEO_CONTENT_URI);
-//				ContentValues values = new ContentValues(7);
-//				values.put(Video.Media.TITLE, "video");
-//				values.put(Video.Media.DISPLAY_NAME, "video.mp4");
-//				values.put(Video.Media.DATE_TAKEN, System.currentTimeMillis());
-//				values.put(Video.Media.MIME_TYPE, "video/3gpp");
-//				values.put(Video.Media.DATA, videoPath);
-//				try {
-//					uriVideoPath = getContentResolver().insert(videoTable,
-//							values);
-//				} catch (Throwable e) {
-//					uriVideoPath = null;
-//					e.printStackTrace();
-//				}
+				// Uri videoTable = Uri.parse(VIDEO_CONTENT_URI);
+				// ContentValues values = new ContentValues(7);
+				// values.put(Video.Media.TITLE, "video");
+				// values.put(Video.Media.DISPLAY_NAME, "video.mp4");
+				// values.put(Video.Media.DATE_TAKEN,
+				// System.currentTimeMillis());
+				// values.put(Video.Media.MIME_TYPE, "video/3gpp");
+				// values.put(Video.Media.DATA, videoPath);
+				// try {
+				// uriVideoPath = getContentResolver().insert(videoTable,
+				// values);
+				// } catch (Throwable e) {
+				// uriVideoPath = null;
+				// e.printStackTrace();
+				// }
 				publishProgress(100);
 				return null;
 			}

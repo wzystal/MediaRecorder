@@ -22,24 +22,25 @@ public final class R {
         public static final int activity_vertical_margin=0x7f040001;
     }
     public static final class drawable {
-        public static final int box_total_time=0x7f020000;
-        public static final int btn_lightgreen_bg=0x7f020001;
-        public static final int btn_recorder_back=0x7f020002;
-        public static final int btn_recorder_delete=0x7f020003;
-        public static final int btn_recorder_delete_hl=0x7f020004;
-        public static final int btn_recorder_finish=0x7f020005;
-        public static final int btn_recorder_flash=0x7f020006;
-        public static final int btn_recorder_ok=0x7f020007;
-        public static final int btn_recorder_ok_hl=0x7f020008;
-        public static final int btn_recorder_overturn=0x7f020009;
-        public static final int btn_recorder_rollback=0x7f02000a;
-        public static final int btn_recorder_video=0x7f02000b;
-        public static final int btn_recorder_video_big=0x7f02000c;
-        public static final int btn_recorder_video_big_hl=0x7f02000d;
-        public static final int button_globaldialog=0x7f02000e;
-        public static final int button_status_color=0x7f02000f;
-        public static final int ic_launcher=0x7f020010;
-        public static final int recorder_success_progress=0x7f020011;
+        public static final int box_recorder_focus=0x7f020000;
+        public static final int box_total_time=0x7f020001;
+        public static final int btn_lightgreen_bg=0x7f020002;
+        public static final int btn_recorder_back=0x7f020003;
+        public static final int btn_recorder_delete=0x7f020004;
+        public static final int btn_recorder_delete_hl=0x7f020005;
+        public static final int btn_recorder_finish=0x7f020006;
+        public static final int btn_recorder_flash=0x7f020007;
+        public static final int btn_recorder_ok=0x7f020008;
+        public static final int btn_recorder_ok_hl=0x7f020009;
+        public static final int btn_recorder_overturn=0x7f02000a;
+        public static final int btn_recorder_rollback=0x7f02000b;
+        public static final int btn_recorder_video=0x7f02000c;
+        public static final int btn_recorder_video_big=0x7f02000d;
+        public static final int btn_recorder_video_big_hl=0x7f02000e;
+        public static final int button_globaldialog=0x7f02000f;
+        public static final int button_status_color=0x7f020010;
+        public static final int ic_launcher=0x7f020011;
+        public static final int recorder_success_progress=0x7f020012;
     }
     public static final class id {
         public static final int SCROLLER_ID=0x7f070010;
