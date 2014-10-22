@@ -12,7 +12,6 @@ import java.util.List;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -571,6 +570,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 				ArrayList<VideoFrame> videoList = null;
 				VideoFrame videoFrame = null;
 				int allSize1 = allVideoList.size(), perProgress1 = 0, count1 = 0;
+				Log.d("wzy.logic", "开始合成视频...视频片段数：" + allSize1);
 				// if (allSize1 == 0) {
 				// publishProgress(40);
 				// } else {
@@ -584,8 +584,13 @@ public class RecorderActivity extends Activity implements OnClickListener,
 						videoFrame = videoList.get(i);
 						mediaRecorder.setTimestamp(videoFrame.getTimeStamp());
 						try {
-							mediaRecorder.record(videoFrame.getIplImage());
+							if (mediaRecorder.record(videoFrame.getIplImage())) {
+								Log.d("wzy.logic", "视频合成成功！时间戳：" + videoFrame.getTimeStamp());
+							}else {
+								Log.d("wzy.logic", "视频合成失败！");
+							}
 						} catch (com.googlecode.javacv.FrameRecorder.Exception e) {
+							Log.d("wzy.logic", "视频合成异常！错误代码" + e.getMessage());
 							e.printStackTrace();
 						}
 					}
@@ -595,6 +600,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 						.iterator();
 				ArrayList<ShortBuffer> audioList = null;
 				int allSize2 = allVideoList.size(), perProgress2 = 0, count2 = 0;
+				Log.d("wzy.logic", "开始合成音频...音频片段数：" + allSize1);
 				// if (allSize2 == 0) {
 				// publishProgress(90);
 				// } else {
@@ -694,6 +700,15 @@ public class RecorderActivity extends Activity implements OnClickListener,
 			progressView.setCurrentState(State.PAUSE);
 			progressView.putTimeList((int) totalTime);
 			startPauseTime = System.currentTimeMillis();
+			// 保存本次录制的视频、音频数据
+			ArrayList<VideoFrame> tempList1 = (ArrayList<VideoFrame>) tempVideoList
+					.clone();
+			allVideoList.add(tempList1);
+			tempVideoList.clear();
+			ArrayList<ShortBuffer> tempList2 = (ArrayList<ShortBuffer>) tempAudioList
+					.clone();
+			allAudioList.add(tempList2);
+			tempAudioList.clear();
 			break;
 		}
 		return true;
