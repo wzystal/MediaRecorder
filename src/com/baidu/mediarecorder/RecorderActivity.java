@@ -31,7 +31,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -43,11 +42,11 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.baidu.mediarecorder.ProgressView.State;
 import static com.baidu.mediarecorder.contant.RecorderEnv.*;
 import com.baidu.mediarecorder.util.CameraHelper;
 import com.baidu.mediarecorder.util.FFmpegFrameRecorder;
+import com.baidu.mediarecorder.util.LogHelper;
 import com.baidu.mediarecorder.util.YuvHelper;
 import com.baidu.mediarecorder.util.VideoFrame;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
@@ -106,11 +105,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	private boolean isRecordStart = false;
 	private boolean isRecordFinish = false;
 	private boolean recording = false;
-	private boolean isFlashOn = false;// 是否开启闪光灯
-	private boolean isFrontCamera = false;// 是否为前置摄像头
-	private boolean isFirstFrame = true;// 是否为第一帧
 	private boolean isRollbackSate = false;// 回删状态标识，点击"回删"标记为true，再次点击"回删"会删除最近的视频片段
-	private boolean isRecordingSaved = false;// 是否保存过视频文件
 
 	private Camera camera;
 	private Parameters cameraParams;
@@ -119,7 +114,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		Log.d("wzy.lifecycle", TAG + ".onCreate() called!");
+		LogHelper.d("wzy.lifecycle", TAG + ".onCreate() called!");
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_recorder);
 		initView();
@@ -127,7 +122,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 	@Override
 	protected void onResume() {
-		Log.d("wzy.lifecycle", TAG + ".onResume() called!");
+		LogHelper.d("wzy.lifecycle", TAG + ".onResume() called!");
 		super.onResume();
 		initCamera();
 	}
@@ -267,7 +262,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 		@Override
 		public void surfaceCreated(SurfaceHolder holder) {
-			Log.d("wzy.lifecycle", TAG + ".surfaceCreated() called!");
+			LogHelper.d("wzy.lifecycle", TAG + ".surfaceCreated() called!");
 			try {
 				camera.setPreviewDisplay(holder);
 			} catch (IOException e) {
@@ -278,14 +273,14 @@ public class RecorderActivity extends Activity implements OnClickListener,
 		@Override
 		public void surfaceChanged(SurfaceHolder holder, int format, int width,
 				int height) {
-			Log.d("wzy.lifecycle", TAG + ".surfaceChanged() called!");
+			LogHelper.d("wzy.lifecycle", TAG + ".surfaceChanged() called!");
 			handleSurfaceChanged();
 			camera.startPreview();
 		}
 
 		@Override
 		public void surfaceDestroyed(SurfaceHolder holder) {
-			Log.d("wzy.lifecycle", TAG + ".surfaceDestroyed() called!");
+			LogHelper.d("wzy.lifecycle", TAG + ".surfaceDestroyed() called!");
 			// if (null != camera) {
 			// camera.stopPreview();
 			// camera.release();
@@ -299,7 +294,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 				totalTime = System.currentTimeMillis() - startTime
 						- totalPauseTime - rollbackTime
 						- ((long) (1.0 / (double) VIDEO_FRAME_RATE) * 1000);
-				Log.d("wzy.logic", "开始录制视频...totalTime=" + totalTime);
+				LogHelper.d("wzy.logic", "开始录制视频...totalTime=" + totalTime);
 				if (totalTime > MAX_RECORD_TIME)
 					return;
 				if (totalTime > 0)
@@ -468,15 +463,18 @@ public class RecorderActivity extends Activity implements OnClickListener,
 					}
 				}
 				audioRecord.startRecording();
-				while (recording && totalTime <= MAX_RECORD_TIME) {
-					audioTimeStamp = (long) (1000 * mCount / (AUDIO_SAMPLE_RATE * 1f));
-					int readSize = audioRecord.read(buffer, 0, buffer.length);
-					if (readSize > 0) {
-						short[] tempBuf = new short[readSize];
-						System.arraycopy(buffer, 0, tempBuf, 0, readSize);
-						ShortBuffer shortBuffer = ShortBuffer.wrap(tempBuf);
-						mCount += shortBuffer.limit();
-						tempAudioList.add(shortBuffer);
+				while (!isRecordFinish) {
+					if (recording) {
+						audioTimeStamp = (long) (1000 * mCount / (AUDIO_SAMPLE_RATE * 1f));
+						int readSize = audioRecord.read(buffer, 0,
+								buffer.length);
+						if (readSize > 0) {
+							short[] tempBuf = new short[readSize];
+							System.arraycopy(buffer, 0, tempBuf, 0, readSize);
+							ShortBuffer shortBuffer = ShortBuffer.wrap(tempBuf);
+							mCount += shortBuffer.limit();
+							tempAudioList.add(shortBuffer);
+						}
 					}
 				}
 				audioRecord.stop();
@@ -570,7 +568,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 				ArrayList<VideoFrame> videoList = null;
 				VideoFrame videoFrame = null;
 				int allSize1 = allVideoList.size(), perProgress1 = 0, count1 = 0;
-				Log.d("wzy.logic", "开始合成视频...视频片段数：" + allSize1);
+				LogHelper.d("wzy.logic", "开始合成视频...视频片段数：" + allSize1);
 				// if (allSize1 == 0) {
 				// publishProgress(40);
 				// } else {
@@ -585,12 +583,14 @@ public class RecorderActivity extends Activity implements OnClickListener,
 						mediaRecorder.setTimestamp(videoFrame.getTimeStamp());
 						try {
 							if (mediaRecorder.record(videoFrame.getIplImage())) {
-								Log.d("wzy.logic", "视频合成成功！时间戳：" + videoFrame.getTimeStamp());
-							}else {
-								Log.d("wzy.logic", "视频合成失败！");
+								LogHelper.d("wzy.logic", "视频合成成功！时间戳："
+										+ videoFrame.getTimeStamp());
+							} else {
+								LogHelper.d("wzy.logic", "视频合成失败！");
 							}
 						} catch (com.googlecode.javacv.FrameRecorder.Exception e) {
-							Log.d("wzy.logic", "视频合成异常！错误代码" + e.getMessage());
+							LogHelper.d("wzy.logic",
+									"视频合成异常！错误代码" + e.getMessage());
 							e.printStackTrace();
 						}
 					}
@@ -600,7 +600,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 						.iterator();
 				ArrayList<ShortBuffer> audioList = null;
 				int allSize2 = allVideoList.size(), perProgress2 = 0, count2 = 0;
-				Log.d("wzy.logic", "开始合成音频...音频片段数：" + allSize1);
+				LogHelper.d("wzy.logic", "开始合成音频...音频片段数：" + allSize2);
 				// if (allSize2 == 0) {
 				// publishProgress(90);
 				// } else {
@@ -610,31 +610,23 @@ public class RecorderActivity extends Activity implements OnClickListener,
 					audioList = audioIterator.next();
 					count2++;
 					// publishProgress(60 + perProgress2 * count2);
+					LogHelper.d("wzy",
+							"开始合成音频片段" + count2 + "，帧数：" + audioList.size());
 					for (ShortBuffer shortBuffer : audioList) {
 						try {
-							mediaRecorder.record(AUDIO_SAMPLE_RATE,
-									new Buffer[] { shortBuffer });
+							if (mediaRecorder.record(AUDIO_SAMPLE_RATE,
+									new Buffer[] { shortBuffer })) {
+								LogHelper.d("wzy.logic", "音频合成成功！");
+							} else {
+								LogHelper.d("wzy.logic", "音频合成失败！");
+							}
 						} catch (com.googlecode.javacv.FrameRecorder.Exception e) {
-							e.printStackTrace();
+							LogHelper
+									.d("wzy.logic", "音频合成异常！" + e.getMessage());
 						}
 					}
 				}
 				publishProgress(90);
-				// Uri videoTable = Uri.parse(VIDEO_CONTENT_URI);
-				// ContentValues values = new ContentValues(7);
-				// values.put(Video.Media.TITLE, "video");
-				// values.put(Video.Media.DISPLAY_NAME, "video.mp4");
-				// values.put(Video.Media.DATE_TAKEN,
-				// System.currentTimeMillis());
-				// values.put(Video.Media.MIME_TYPE, "video/3gpp");
-				// values.put(Video.Media.DATA, videoPath);
-				// try {
-				// uriVideoPath = getContentResolver().insert(videoTable,
-				// values);
-				// } catch (Throwable e) {
-				// uriVideoPath = null;
-				// e.printStackTrace();
-				// }
 				publishProgress(100);
 				return null;
 			}
@@ -675,7 +667,8 @@ public class RecorderActivity extends Activity implements OnClickListener,
 	public boolean onTouch(View view, MotionEvent event) {
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
-			Log.d("wzy.lifecycle", TAG + ".onTouch() called ! ACTION_DOWN");
+			LogHelper.d("wzy.lifecycle", TAG
+					+ ".onTouch() called ! ACTION_DOWN");
 			recording = true;
 			btnFinish.setEnabled(false);
 			btnRollback.setEnabled(false);
@@ -692,7 +685,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 			progressView.setCurrentState(State.START);
 			break;
 		case MotionEvent.ACTION_UP:
-			Log.d("wzy.lifecycle", TAG + ".onTouch() called ! ACTION_UP");
+			LogHelper.d("wzy.lifecycle", TAG + ".onTouch() called ! ACTION_UP");
 			recording = false;
 			if (totalTime > MIN_RECORD_TIME)
 				btnFinish.setEnabled(true);
@@ -716,7 +709,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 	@Override
 	protected void onStop() {
-		Log.d("wzy.lifecycle", TAG + ".onStop() called!");
+		LogHelper.d("wzy.lifecycle", TAG + ".onStop() called!");
 		super.onStop();
 		if (null != camera) {
 			camera.stopPreview();
@@ -727,7 +720,7 @@ public class RecorderActivity extends Activity implements OnClickListener,
 
 	@Override
 	protected void onDestroy() {
-		Log.d("wzy.lifecycle", TAG + ".onDestroy() called!");
+		LogHelper.d("wzy.lifecycle", TAG + ".onDestroy() called!");
 		super.onDestroy();
 		if (null != camera) {
 			camera.release();
